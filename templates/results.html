@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rebel OSINT - Results</title>
+    <style>
+        :root {
+            --primary: #00ff00;
+            --secondary: #00ffff;
+            --danger: #ff5555;
+            --dark-bg: #0f0f23;
+            --card-bg: #1a1a2e;
+            --text: #e0e0e0;
+        }
+        
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: var(--dark-bg); 
+            color: var(--text); 
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container { 
+            width: 90%; 
+            max-width: 1200px;
+            margin: 0 auto; 
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header h2 {
+            color: var(--secondary);
+            font-size: 1.5em;
+        }
+        
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--primary); 
+            padding: 25px; 
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .card-title {
+            color: var(--secondary);
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 200px;
+            text-align: center;
+            margin: 10px;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--secondary);
+        }
+        
+        .export-buttons { 
+            margin: 30px 0; 
+            text-align: center;
+        }
+        
+        .export-buttons button { 
+            background: var(--primary); 
+            color: var(--dark-bg); 
+            border: none; 
+            padding: 12px 25px; 
+            margin: 0 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .export-buttons button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid var(--primary);
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: rgba(0, 255, 0, 0.1);
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        
+        .positive {
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .negative {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .confidence-high {
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .confidence-medium {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .confidence-low {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .impact-high {
+            background-color: rgba(255, 0, 0, 0.2);
+            font-weight: bold;
+        }
+        
+        .impact-medium {
+            background-color: rgba(255, 165, 0, 0.2);
+            font-weight: bold;
+        }
+        
+        .impact-low {
+            background-color: rgba(0, 255, 0, 0.2);
+        }
+        
+        .section-toggle {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsed .section-content {
+            max-height: 0;
+        }
+        
+        .expanded .section-content {
+            max-height: 5000px;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 5px;
+            height: calc(100% - 10px);
+            width: 2px;
+            background: var(--primary);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--secondary);
+            border: 2px solid var(--primary);
+        }
+        
+        .timeline-time {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .map-container {
+            height: 400px;
+            width: 100%;
+            background: #2a2a4a;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .map-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--secondary);
+            font-size: 1.2em;
+        }
+        
+        .tech-badge {
+            display: inline-block;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid var(--secondary);
+            border-radius: 4px;
+            padding: 3px 8px;
+            margin: 3px;
+            font-size: 0.85em;
+        }
+        
+        .risk-badge {
+            display: inline-block;
+            border-radius: 12px;
+            padding: 3px 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        
+        .risk-high {
+            background-color: rgba(255, 0, 0, 0.3);
+            border: 1px solid var(--danger);
+        }
+        
+        .risk-medium {
+            background-color: rgba(255, 165, 0, 0.3);
+            border: 1px solid #ffcc00;
+        }
+        
+        .risk-low {
+            background-color: rgba(0, 255, 0, 0.3);
+            border: 1px solid var(--primary);
+        }
+        
+        .social-media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .social-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        
+        .social-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 255, 0, 0.2);
+        }
+        
+        .social-card.found {
+            border-color: var(--primary);
+        }
+        
+        .social-card.not-found {
+            border-color: var(--danger);
+        }
+        
+        .social-name {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .social-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .status-found {
+            background: rgba(0, 255, 0, 0.2);
+            color: var(--primary);
+        }
+        
+        .status-not-found {
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--danger);
+        }
+        
+        .social-link {
+            color: var(--secondary);
+            display: block;
+            margin: 10px 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .social-details {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-stats {
+                flex-direction: column;
+            }
+            
+            .stat-card {
+                width: 100%;
+                margin: 10px 0;
+            }
+            
+            .social-media-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Rebel OSINT Report 🔥</h1>
+            <h2>Target: {{ results.username }}</h2>
+            <p>Investigation completed at: {{ results.metadata.timestamp }} | Duration: {{ results.metadata.investigation_time }} seconds</p>
+        </div>
+        
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ results.social_media | length }}</div>
+                <div class="stat-label">Social Media Platforms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ results.breaches | length }}</div>
+                <div class="stat-label">Data Breaches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ results.email_addresses | length }}</div>
+                <div class="stat-label">Email Addresses</div>
+            </div>
+            {% if results.domain_info %}
+            <div class="stat-card">
+                <div class="stat-value">{{ results.domain_info.domain_age_days }} days</div>
+                <div class="stat-label">Domain Age</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="export-buttons">
+            <button onclick="location.href='/export/json'">Export JSON</button>
+            <button onclick="location.href='/export/csv'">Export CSV</button>
+            <button onclick="location.href='/export/txt'">Export TXT</button>
+            <button onclick="window.print()">Print Report</button>
+        </div>
+        
+        <!-- Social Media Section -->
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('social-media')">
+                <h2 class="card-title">
+                    <i class="fas fa-share-alt"></i> Social Media Presence
+                </h2>
+                <span id="social-media-icon">▼</span>
+            </div>
+            <div id="social-media" class="section-content expanded">
+                <div class="social-media-grid">
+                    {% for platform, data in results.social_media.items() %}
+                    <div class="social-card {% if data.exists %}found{% else %}not-found{% endif %}">
+                        <div class="social-name">
+                            <span>{{ platform | capitalize }}</span>
+                            <span class="social-status {% if data.exists %}status-found{% else %}status-not-found{% endif %}">
+                                {% if data.exists %}Found{% else %}Not Found{% endif %}
+                            </span>
+                        </div>
+                        <a href="{{ data.url }}" target="_blank" class="social-link">{{ data.url }}</a>
+                        <div class="social-details">
+                            <div>Status: {{ data.status_code }}</div>
+                            <div>Confidence: 
+                                <span class="confidence-{{ data.confidence }}">
+                                    {{ data.confidence | upper }}
+                                </span>
+                            </div>
+                            {% if data.profile_data.name %}
+                            <div>Name: {{ data.profile_data.name }}</div>
+                            {% endif %}
+                            {% if data.profile_data.bio %}
+                            <div>Bio: {{ data.profile_data.bio | truncate(100) }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Breaches Section -->
+        {% if results.breaches %}
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('breaches')">
+                <h2 class="card-title">
+                    <i class="fas fa-shield-alt"></i> Data Breaches ({{ results.breaches | length }})
+                </h2>
+                <span id="breaches-icon">▼</span>
+            </div>
+            <div id="breaches" class="section-content expanded">
+                <table>
+                    <tr>
+                        <th>Breach</th>
+                        <th>Date</th>
+                        <th>Compromised Data</th>
+                        <th>Impact</th>
+                    </tr>
+                    {% for breach in results.breaches %}
+                    <tr>
+                        <td>
+                            <strong>{{ breach.Name }}</strong><br>
+                            <small>{{ breach.Domain }}</small>
+                        </td>
+                        <td>{{ breach.BreachDate }}</td>
+                        <td>
+                            {% for data in breach.DataClasses %}
+                            <div class="tech-badge">{{ data }}</div>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if breach.impact_score >= 7 %}
+                            <span class="risk-badge risk-high">HIGH ({{ breach.impact_score }}/10)</span>
+                            {% elif breach.impact_score >= 4 %}
+                            <span class="risk-badge risk-medium">MEDIUM ({{ breach.impact_score }}/10)</span>
+                            {% else %}
+                            <span class="risk-badge risk-low">LOW ({{ breach.impact_score }}/10)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Email Addresses Section -->
+        {% if results.email_addresses %}
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('emails')">
+                <h2 class="card-title">
+                    <i class="fas fa-envelope"></i> Email Addresses ({{ results.email_addresses | length }})
+                </h2>
+                <span id="emails-icon">▼</span>
+            </div>
+            <div id="emails" class="section-content expanded">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                    {% for email in results.email_addresses %}
+                    <div style="background: rgba(0,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00ffff;">
+                        <div style="font-size: 1.2em; margin-bottom: 5px;">{{ email }}</div>
+                        <div>
+                            <a href="https://www.google.com/search?q={{ email }}" target="_blank" style="color: #00ff00; margin-right: 10px;">
+                                <i class="fas fa-search"></i> Search
+                            </a>
+                            <a href="mailto:{{ email }}" style="color: #00ff00;">
+                                <i class="fas fa-envelope"></i> Send Email
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Domain Information Section -->
+        {% if results.domain_info %}
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('domain')">
+                <h2 class="card-title">
+                    <i class="fas fa-globe"></i> Domain Information
+                </h2>
+                <span id="domain-icon">▼</span>
+            </div>
+            <div id="domain" class="section-content expanded">
+                <h3>WHOIS Data</h3>
+                <table>
+                    <tr>
+                        <th>Registrar</th>
+                        <td>{{ results.domain_info.whois.registrar }}</td>
+                    </tr>
+                    <tr>
+                        <th>Creation Date</th>
+                        <td>{{ results.domain_info.whois.creation_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Expiration Date</th>
+                        <td>{{ results.domain_info.whois.expiration_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Domain Age</th>
+                        <td>{{ results.domain_info.domain_age_days }} days</td>
+                    </tr>
+                </table>
+                
+                <h3>DNS Records</h3>
+                {% if results.domain_info.dns_a %}
+                <p><strong>A Records:</strong> {{ results.domain_info.dns_a|join(', ') }}</p>
+                {% endif %}
+                {% if results.domain_info.dns_mx %}
+                <p><strong>MX Records:</strong> {{ results.domain_info.dns_mx|join(', ') }}</p>
+                {% endif %}
+                {% if results.domain_info.dns_txt %}
+                <p><strong>TXT Records:</strong> {{ results.domain_info.dns_txt|join(', ') }}</p>
+                {% endif %}
+                
+                <h3>SSL Certificate</h3>
+                <table>
+                    <tr>
+                        <th>Issuer</th>
+                        <td>{{ results.domain_info.ssl_details.issuer }}</td>
+                    </tr>
+                    <tr>
+                        <th>Valid From</th>
+                        <td>{{ results.domain_info.ssl_details.valid_from }}</td>
+                    </tr>
+                    <tr>
+                        <th>Valid To</th>
+                        <td>{{ results.domain_info.ssl_details.valid_to }}</td>
+                    </tr>
+                    <tr>
+                        <th>Days Remaining</th>
+                        <td>{{ results.domain_info.ssl_details.days_remaining }}</td>
+                    </tr>
+                </table>
+                
+                {% if results.domain_info.tech_stack %}
+                <h3>Technology Stack</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    {% for tech, details in results.domain_info.tech_stack.items() %}
+                    <div style="background: rgba(0,255,255,0.1); padding: 8px 15px; border-radius: 20px; border: 1px solid #00ffff;">
+                        <strong>{{ tech }}</strong>: {{ details|join(', ') }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- IP Information Section -->
+        {% if results.ip_info %}
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('ip-info')">
+                <h2 class="card-title">
+                    <i class="fas fa-network-wired"></i> IP Information
+                </h2>
+                <span id="ip-info-icon">▼</span>
+            </div>
+            <div id="ip-info" class="section-content expanded">
+                {% if results.ip_info.ipinfo %}
+                <h3>Geolocation</h3>
+                <table>
+                    <tr>
+                        <th>IP Address</th>
+                        <td>{{ results.ip_info.ip }}</td>
+                    </tr>
+                    <tr>
+                        <th>Location</th>
+                        <td>
+                            {{ results.ip_info.ipinfo.city }}, 
+                            {{ results.ip_info.ipinfo.region }}, 
+                            {{ results.ip_info.ipinfo.country }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Coordinates</th>
+                        <td>{{ results.ip_info.ipinfo.loc }}</td>
+                    </tr>
+                    <tr>
+                        <th>ISP</th>
+                        <td>{{ results.ip_info.ipinfo.org }}</td>
+                    </tr>
+                </table>
+                
+                <div class="map-container">
+                    <div class="map-placeholder">
+                        <a href="{{ results.geolocation.map_url }}" target="_blank" style="color: #00ffff; text-decoration: none;">
+                            <i class="fas fa-map-marked-alt" style="font-size: 2em; margin-bottom: 10px;"></i><br>
+                            View on Google Maps
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if results.ip_info.shodan %}
+                <h3>Network Services</h3>
+                <table>
+                    <tr>
+                        <th>Port/Protocol</th>
+                        <th>Service</th>
+                        <th>Vulnerabilities</th>
+                    </tr>
+                    {% for service in results.ip_info.shodan.services %}
+                    <tr>
+                        <td>{{ service.split('/')[0] }}/{{ service.split('/')[1] }}</td>
+                        <td>{{ service.split('(')[1][:-1] }}</td>
+                        <td>
+                            {% if results.ip_info.shodan.vulnerabilities %}
+                            <span class="risk-badge risk-high">{{ results.ip_info.shodan.vulnerabilities | length }}</span>
+                            {% else %}
+                            <span class="risk-badge risk-low">None detected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Reputation Section -->
+        {% if results.reputation %}
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('reputation')">
+                <h2 class="card-title">
+                    <i class="fas fa-shield-alt"></i> Security & Reputation
+                </h2>
+                <span id="reputation-icon">▼</span>
+            </div>
+            <div id="reputation" class="section-content expanded">
+                {% if results.reputation.virustotal %}
+                <h3>VirusTotal Analysis</h3>
+                <table>
+                    <tr>
+                        <th>Reputation Score</th>
+                        <td>{{ results.reputation.virustotal.reputation }}</td>
+                    </tr>
+                    <tr>
+                        <th>Malicious Detections</th>
+                        <td class="{% if results.reputation.virustotal.malicious > 0 %}negative{% else %}positive{% endif %}">
+                            {{ results.reputation.virustotal.malicious }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Suspicious Detections</th>
+                        <td class="{% if results.reputation.virustotal.suspicious > 0 %}negative{% else %}positive{% endif %}">
+                            {{ results.reputation.virustotal.suspicious }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Last Analysis</th>
+                        <td>{{ results.reputation.virustotal.last_analysis_date | format_timestamp }}</td>
+                    </tr>
+                </table>
+                {% endif %}
+                
+                {% if results.reputation.google_safe_browsing %}
+                <h3>Google Safe Browsing</h3>
+                {% if results.reputation.google_safe_browsing %}
+                <div class="negative">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Malicious threats detected!
+                </div>
+                <ul>
+                    {% for threat in results.reputation.google_safe_browsing %}
+                    <li>{{ threat.threatType }} (Platform: {{ threat.platformType }})</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="positive">
+                    <i class="fas fa-check-circle"></i> 
+                    No threats detected
+                </div>
+                {% endif %}
+                {% endif %}
+                
+                {% if results.reputation.security_headers %}
+                <h3>Security Headers</h3>
+                <table>
+                    <tr>
+                        <th>Header</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                    </tr>
+                    {% for header, value in results.reputation.security_headers.items() %}
+                    <tr>
+                        <td>{{ header }}</td>
+                        <td>{{ value | truncate(50) }}</td>
+                        <td class="{% if value == 'MISSING' %}negative{% else %}positive{% endif %}">
+                            {% if value == 'MISSING' %}MISSING{% else %}PRESENT{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Investigation Timeline -->
+        <div class="card">
+            <div class="section-toggle" onclick="toggleSection('timeline')">
+                <h2 class="card-title">
+                    <i class="fas fa-history"></i> Investigation Timeline
+                </h2>
+                <span id="timeline-icon">▼</span>
+            </div>
+            <div id="timeline" class="section-content expanded">
+                <div class="timeline">
+                    {% for entry in results.timeline %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">{{ entry.timestamp }}</div>
+                        <div>{{ entry.action }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Toggle section visibility
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(sectionId + '-icon');
+            
+            if (section.classList.contains('expanded')) {
+                section.classList.remove('expanded');
+                section.classList.add('collapsed');
+                icon.textContent = '►';
+            } else {
+                section.classList.remove('collapsed');
+                section.classList.add('expanded');
+                icon.textContent = '▼';
+            }
+        }
+        
+        // Initialize FontAwesome icons
+        const faScript = document.createElement('script');
+        faScript.src = 'https://kit.fontawesome.com/a076d05399.js';
+        faScript.crossOrigin = 'anonymous';
+        document.head.appendChild(faScript);
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rebel OSINT - Dashboard</title>
+    <style>
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: #0f0f23; 
+            color: #00ff00; 
+            text-align: center; 
+            padding: 50px;
+        }
+        .container { 
+            width: 80%; 
+            margin: auto; 
+        }
+        .card { 
+            background: #1a1a2e; 
+            border: 1px solid #00ff00; 
+            padding: 20px; 
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        input, button { 
+            padding: 10px; 
+            margin: 5px 0; 
+            background: #0f0f23; 
+            color: #00ff00; 
+            border: 1px solid #00ff00; 
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            background: #00ff00;
+            color: #0f0f23;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 10px 20px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, {{ user }}!</h1>
+        <div class="card">
+            <h2>OSINT Investigator</h2>
+            <form action="/investigate" method="POST">
+                <div class="form-group">
+                    <label for="username">Target Username:</label>
+                    <input type="text" id="username" name="username" required style="width: 300px;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="domain">Target Domain (Optional):</label>
+                    <input type="text" id="domain" name="domain" style="width: 300px;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="image_url">Profile Image URL (Optional):</label>
+                    <input type="text" id="image_url" name="image_url" style="width: 400px;">
+                </div>
+                
+                <button type="submit">Start Investigation</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
