@@ -1,0 +1,10 @@
+Flask
+requests
+beautifulsoup4
+exifread
+Pillow
+whois
+shodan
+builtwith
+tldextract
+dnspython
